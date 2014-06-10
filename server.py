@@ -42,7 +42,6 @@ MAX_BUFFER = 1024        # Maximum allowed buffer
 SOCKET_LIST = []         # List of sockets connected to the server
 USERS_LIST = []          # List of connected users
 BLOCK_SIZE = 16          # AES needs a BLOCK_SIZE Of 16, 24 or 32
-CIPHER = ''              # AES Cipher
 
 # the character used for padding--with a block cipher such as AES, the value
 # you encrypt must be a multiple of BLOCK_SIZE in length.  This character is
@@ -135,11 +134,22 @@ def message(target_socket, message):
                 sys.exit()
 
 
-def start_listening():
-    # This constant is needed in order to know what data block has SYMM_KEY
-    FIRST_INCOMING_MESSAGE = True
-    global CIPHER
+def register(ipaddr, socket_id, symmetric_key, nickname):
+    """Registers a new identified user in the chat server, along with his
+    symmetric key for future encryption/decryption."""
+    already_registered = False
+    for user in USERS_LIST:
+        if user[1] == socket_id:
+            already_registered = True
+    if not already_registered:
+        USERS_LIST.append((ipaddr, socket_id, symmetric_key, nickname))
+        return True
+    # If already_registered
+    else:
+        return False
 
+
+def start_listening():
     # Listen to connection requests
     server_socket = create_socket(SERVER_PORT, server=True)
     server_socket.listen(MAX_CONN_REQ)
@@ -170,7 +180,7 @@ def start_listening():
                 # Server socket is about to accept a new connection
                 sockfd, addr = server_socket.accept()
                 # Register the client socket descriptor in the SOCKET_LIST
-                print '(' + addr[0] + ') connected to chat server.'
+                print '\n(' + addr[0] + ') connected to chat server.'
                 SOCKET_LIST.append(sockfd)
                 # Share Public-Key
                 print '\n[Symmetric Key Exchange started]'
@@ -180,7 +190,12 @@ def start_listening():
             else:
                 # Receive data
                 data = sock.recv(MAX_BUFFER)
-                if FIRST_INCOMING_MESSAGE:  # Encrypted with Public Key
+                IS_SYMM_SYN = True
+                for user in USERS_LIST:
+                    if str(sock.fileno()) == user[1]:
+                        IS_SYMM_SYN = False
+                        break
+                if IS_SYMM_SYN:  # Encrypted with Public Key
                     #print 'Encrypted data: ' + data
                     print '--> Receiving encrypted Symmetric Key from client...'
                     symm_key_enc = pickle.loads(data)
@@ -188,19 +203,25 @@ def start_listening():
                     print '--> Decrypting Symmetric Key with Private Key..'
                     print '--> Symmetric key exchange was successful.'
                     print '[Symmetric Key Exchange ended]\n'
-                    CIPHER = AES.new(SYMM_KEY)
-
+                    print 'Storing symmetric key for socket: ' +\
+                          str(sock.fileno()) + ' from ' + addr[0] + '.'
+                    # Register SYMM_KEY for socket_id in USERS_LIST
+                    register(addr[0], str(sock.fileno()), SYMM_KEY, '')
                     # Encrypt SYMM_ACK which is the header
+                    CIPHER = AES.new(SYMM_KEY)
                     data = SYMM_ACK
                     data_enc = EncodeAES(CIPHER, data)
                     # Send SYMM_ACK to confirm Symmetric Key Exchange
                     message(sock, data_enc)
-                    FIRST_INCOMING_MESSAGE = False
                 else:
+                    for user in USERS_LIST:
+                        if str(sock.fileno()) == user[1]:
+                            CIPHER = AES.new(user[2])
                     decoded = DecodeAES(CIPHER, data)
                     # Server info requested
                     if decoded[:2] == REQ_SERVER_INFO:
-                        print 'Server Info requested by ' + addr[0]
+                        print 'Server Info requested by socket id ' +\
+                              str(sock.fileno()) + ' from ' + addr[0] + '.'
                         # SHARE_SERVER_INFO is the header
                         msg = SHARE_SERVER_INFO + ',' + str(MAX_CONN_REQ) +\
                               ',' + str(MAX_NICK_LEN) + ',' +\

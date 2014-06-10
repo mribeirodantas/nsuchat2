@@ -139,9 +139,9 @@ if __name__ == "__main__":
                         print '\n[Symmetric Key Exchange started]'
                         print '--> Receiving Public Key from Server...'
                         public_key = pickle.loads(data)
-                        secretText = public_key.encrypt(SYMM_KEY, 32)
+                        SYMM_KEY_enc = public_key.encrypt(SYMM_KEY, 32)
                         print '--> Sending encrypted Symmetric Key to server...'
-                        message(sock, pickle.dumps(secretText))
+                        message(sock, pickle.dumps(SYMM_KEY_enc))
                         FIRST_READING = False
                     else:  # Receiving data encrypted with Symmetric Key
                         print '--> Decrypting incoming data...'
