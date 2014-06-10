@@ -27,6 +27,8 @@ import sys
 
 from Crypto.PublicKey import RSA
 from Crypto.Util import randpool
+from Crypto.Cipher import AES
+import base64
 import pickle
 
 from apdu import *
@@ -39,6 +41,21 @@ SERVER_PORT = 2020       # Define the port to listen
 MAX_BUFFER = 1024        # Maximum allowed buffer
 SOCKET_LIST = []         # List of sockets connected to the server
 USERS_LIST = []          # List of connected users
+BLOCK_SIZE = 16          # AES needs a BLOCK_SIZE Of 16, 24 or 32
+CIPHER = ''              # AES Cipher
+
+# the character used for padding--with a block cipher such as AES, the value
+# you encrypt must be a multiple of BLOCK_SIZE in length.  This character is
+# used to ensure that your value is always a multiple of BLOCK_SIZE
+PADDING = '{'
+
+# one-liner to sufficiently pad the text to be encrypted
+pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING
+
+# one-liners to encrypt/encode and decrypt/decode a string
+# encrypt with AES, encode with base64
+EncodeAES = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
+DecodeAES = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
 
 
 def generate_asymm_key():
@@ -99,9 +116,29 @@ def create_socket(SERVER_PORT, host='0.0.0.0', server=False):
     return s
 
 
+def message(target_socket, message):
+    """Takes a target socket and a message and sends a message to the specified
+    socket. This function is supposed to be only used for server notificatoins
+    to specific users. For all users, check broadcast.__doc__"""
+    # Send the message only to the target
+    for sockfd in SOCKET_LIST:
+        if sockfd == target_socket:
+            try:
+                sockfd.send(message)
+            # broken socket connection may be, chat client pressed ctrl+c
+            # for example
+            except socket.error, msg:
+                print 'Failed to send message. Error code: ' + str(msg[0]) +\
+                      ' Error' + ' message: ' + msg[1]
+                sockfd.close()
+                SOCKET_LIST.remove(sockfd)
+                sys.exit()
+
+
 def start_listening():
     # This constant is needed in order to know what data block has SYMM_KEY
     FIRST_INCOMING_MESSAGE = True
+    global CIPHER
 
     # Listen to connection requests
     server_socket = create_socket(SERVER_PORT, server=True)
@@ -133,15 +170,30 @@ def start_listening():
                 # Server socket is about to accept a new connection
                 sockfd, addr = server_socket.accept()
                 # Register the client socket descriptor in the SOCKET_LIST
+                print '(' + addr[0] + ') connected to chat server.'
                 SOCKET_LIST.append(sockfd)
                 # Share Public-Key
-                sockfd.send(pickle.dumps(RSAPubKey))
+                print '\n[Symmetric Key Exchange started]'
+                print '--> Sending public key..'
+                message(sockfd, pickle.dumps(RSAPubKey))
             # Some incoming message from a client
             else:
-                if FIRST_INCOMING_MESSAGE:
-                    data = sock.recv(MAX_BUFFER)
+                # Receive data
+                data = sock.recv(MAX_BUFFER)
+                if FIRST_INCOMING_MESSAGE:  # If encrypted with Public Key
+                    #print 'Encrypted data: ' + data
+                    print '--> Receiving encrypted Symmetric Key from client...'
                     symm_key_enc = pickle.loads(data)
-                    print RSAPrivKey.decrypt(symm_key_enc)
+                    SYMM_KEY = RSAPrivKey.decrypt(symm_key_enc)
+                    print '--> Decrypting Symmetric Key with Private Key..'
+                    print '--> Symmetric key exchange was successful.'
+                    print '[Symmetric Key Exchange ended]'
+                    CIPHER = AES.new(SYMM_KEY)
+
+                    # Encrypt SYMM_ACK
+                    data = SYMM_ACK
+                    data_enc = EncodeAES(CIPHER, data)
+                    message(sock, data_enc)
                     FIRST_INCOMING_MESSAGE = False
 
 if __name__ == "__main__":
