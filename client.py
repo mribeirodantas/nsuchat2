@@ -148,4 +148,29 @@ if __name__ == "__main__":
                         decoded = DecodeAES(CIPHER, data)
                         if decoded[:2] == SYMM_ACK:
                             print '--> Symmetric key exchange was successful.'
-                            print '[Symmetric Key Exchange ended]'
+                            print '[Symmetric Key Exchange ended]\n'
+                            # Request Server Information
+                            data_enc = EncodeAES(CIPHER, REQ_SERVER_INFO)
+                            # Send REQ_SERVER_INFO to server
+                            message(sock, data_enc)
+                        elif decoded[:2] == SHARE_SERVER_INFO:
+                            data = decoded.split(',')
+                            print '\nChat server configuration:'
+                            print 'Maximum number of connected users: ' +\
+                                   data[1]
+                            print 'Maximum nickname length: ' + data[2]
+                            print 'Maximum message length: ' + data[3]
+                            print 'Protocol version: ' + data[4] + '\n'
+                            if data[4] == str(VERSION):
+                                if len(nickname) <= int(data[2]):
+                                    pass
+                                    # Send nickname
+                                else:
+                                    print 'Sorry, your nickname is too long.\n'
+                                    sys.exit()
+                            else:
+                                print 'Sorry, version mismatch ocurred.\n' +\
+                                'Server Application Protocol Version: ' +\
+                                 data[4] + '\nClient Application Protocol' +\
+                                 ' Version: ' + str(VERSION)
+                                sys.exit()

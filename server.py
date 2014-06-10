@@ -180,21 +180,34 @@ def start_listening():
             else:
                 # Receive data
                 data = sock.recv(MAX_BUFFER)
-                if FIRST_INCOMING_MESSAGE:  # If encrypted with Public Key
+                if FIRST_INCOMING_MESSAGE:  # Encrypted with Public Key
                     #print 'Encrypted data: ' + data
                     print '--> Receiving encrypted Symmetric Key from client...'
                     symm_key_enc = pickle.loads(data)
                     SYMM_KEY = RSAPrivKey.decrypt(symm_key_enc)
                     print '--> Decrypting Symmetric Key with Private Key..'
                     print '--> Symmetric key exchange was successful.'
-                    print '[Symmetric Key Exchange ended]'
+                    print '[Symmetric Key Exchange ended]\n'
                     CIPHER = AES.new(SYMM_KEY)
 
-                    # Encrypt SYMM_ACK
+                    # Encrypt SYMM_ACK which is the header
                     data = SYMM_ACK
                     data_enc = EncodeAES(CIPHER, data)
+                    # Send SYMM_ACK to confirm Symmetric Key Exchange
                     message(sock, data_enc)
                     FIRST_INCOMING_MESSAGE = False
+                else:
+                    decoded = DecodeAES(CIPHER, data)
+                    # Server info requested
+                    if decoded[:2] == REQ_SERVER_INFO:
+                        print 'Server Info requested by ' + addr[0]
+                        # SHARE_SERVER_INFO is the header
+                        msg = SHARE_SERVER_INFO + ',' + str(MAX_CONN_REQ) +\
+                              ',' + str(MAX_NICK_LEN) + ',' +\
+                              str(MAX_MSG_LEN) + ',' + APP_PROTO_VER
+                        msg_enc = EncodeAES(CIPHER, msg)
+                        # Sharing server info
+                        message(sock, msg_enc)
 
 if __name__ == "__main__":
     if (len(sys.argv) != 2):

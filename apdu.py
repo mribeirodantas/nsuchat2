@@ -25,10 +25,24 @@
 # does not fit this case. Other files should do:
 # from apdu import *
 
-SYMM_SYNC = '01'
 SYMM_ACK = '02'
+"""  --------
+    | HEADER |
+    |   02   |
+    |________|"""
+
 REQ_SERVER_INFO = '03'
+"""  --------
+    | HEADER |
+    |   03   |
+    |________|"""
+
 SHARE_SERVER_INFO = '04'
+"""  --------------------------------------------------------------------
+    | HEADER | MAX_CONN_REQ | MAX_NICK_LEN | MAX_MSG_LEN | APP_PROTO_VER |
+    |   04   |              |              |             |               |
+    |________|______________|______________|_____________|_______________|"""
+
 REGISTER_NICKNAME = '05'
 ALREADY_USED = '06'
 WELCOME = '07'
