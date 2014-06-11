@@ -99,3 +99,10 @@ CHANGE_NICKNAME = '12'
     | HEADER | NICKNAME |
     |   12   |          |
     |________|__________|"""
+
+PUB_MESSAGE = '13'
+# Send public message
+"""  ------------------  or  -----------------------------
+    | HEADER | MESSAGE |    | HEADER | NICKNAME | MESSAGE |
+    |   13   |         |    |        |          |         |
+    |________|_________|    |________|__________|_________|"""

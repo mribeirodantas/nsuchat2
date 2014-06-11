@@ -206,6 +206,12 @@ if __name__ == "__main__":
                             message = decoded[2:]
                             prompt('[server] ', message)
                             prompt()
+                        elif decoded[:2] == PUB_MESSAGE:
+                            msg = decoded[3:].split(',')
+                            prompt('<' + msg[0] + '> ', msg[1])
+                            prompt()
+                        else:
+                            print decoded
 
             # Buffer from stdin (user entered text)
             else:
@@ -227,13 +233,12 @@ if __name__ == "__main__":
                             msg_enc = EncodeAES(CIPHER, msg)
                             send_message(client_socket, msg_enc)
                         prompt()
-                    # Broadcast data
+                    # Broadcast PUB_MESSAGE
                     else:
-                        # Adding BROADCAST header
-                        #h_msg = BROADCAST + msg
-                        #msg_enc = EncodeAES(CIPHER, h_msg)
-                        #client_socket.send(msg_enc)
-                        # If a command has just been run, do not show prompt
+                        # Adding PUB_MESSAGE header
+                        h_msg = PUB_MESSAGE + msg
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        client_socket.send(msg_enc)
                         prompt()
                 except (KeyboardInterrupt, IndexError):
                     print '\nQuitting...'

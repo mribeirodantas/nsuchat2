@@ -133,9 +133,52 @@ def broadcast(source_socket, message, server_socket):
             except:
                 # broken socket connection may be, chat client pressed ctrl+c
                 # for example
-                socket.close()
-                CONNECTION_LIST.remove(socket)
-                remove_user(str(socket.fileno()))
+                # Remove user from USERS_LIST
+                for index, user in enumerate(USERS_LIST):
+                    if user[1] == str(source_socket.fileno()):
+                        # Close connection
+                        source_socket.close()
+                        # Remove socket from SOCKET_LIST
+                        SOCKET_LIST.remove(source_socket)
+                        del USERS_LIST[index]
+                        break
+
+
+def pub_message(source_socket, msg, server_socket):
+    for user in USERS_LIST:
+        if user[1] == str(source_socket.fileno()):
+            nickname = user[3]
+            break
+    # Do not send the message to server socket and the client who has
+    # sent the message
+    for socket in SOCKET_LIST:
+        if socket != server_socket and socket != source_socket:
+            try:
+                for user in USERS_LIST:
+                    # The user for each specific socket
+                    if user[1] == str(socket.fileno()):
+                        SYMM_KEY = user[2]
+                        CIPHER = AES.new(SYMM_KEY)
+                        h_msg = PUB_MESSAGE + ',' + nickname + ',' + msg
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        socket.send(msg_enc)
+            except:
+                print 'fedeu'
+                # broken socket connection may be, chat client pressed ctrl+c
+                # for example
+                # Remove user from USERS_LIST
+                for index, user in enumerate(USERS_LIST):
+                    if user[1] == str(source_socket.fileno()):
+                        # Close connection
+                        source_socket.close()
+                        # Remove socket from SOCKET_LIST
+                        SOCKET_LIST.remove(source_socket)
+                        del USERS_LIST[index]
+                        break
+
+
+def priv_message(source_socket, target_socket, msg):
+    pass
 
 
 def message(target_socket, message):
@@ -351,8 +394,12 @@ def start_listening():
                                             del USERS_LIST[index]
                                             break
                         print USERS_LIST
-                    elif decoded[:2] == BROADCAST:
+                    elif decoded[:2] == PUB_MESSAGE:
                         msg = decoded[2:]
+                        pub_message(sock, msg, server_socket)
+                    elif decoded[:3] == PRIV_MESSAGE:
+                        msg = decoded[2:].split(',')
+                        priv_message(sock, msg[0], msg[1])
                     elif decoded[:2] == DISCONNECT:
                         # Remove user from USERS_LIST
                         for index, user in enumerate(USERS_LIST):
