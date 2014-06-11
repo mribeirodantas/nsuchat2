@@ -214,7 +214,7 @@ def start_listening():
                     data_enc = EncodeAES(CIPHER, data)
                     # Send SYMM_ACK to confirm Symmetric Key Exchange
                     message(sock, data_enc)
-                else:
+                else:  # Encrypted with Symmetric Key
                     for user in USERS_LIST:
                         if str(sock.fileno()) == user[1]:
                             CIPHER = AES.new(user[2])
@@ -271,12 +271,12 @@ def start_listening():
                                     for index, user in enumerate(USERS_LIST):
                                         if user[1] == str(sock.fileno()) and \
                                         user[3] == '':
+                                            # Close connection
+                                            sock.close()
+                                            # Remove socket from SOCKET_LIST
+                                            SOCKET_LIST.remove(sock)
                                             del USERS_LIST[index]
-                                    # Close connection
-                                    sock.close()
-                                    # Remove socket from SOCKET_LIST
-                                    SOCKET_LIST.remove(sockfd)
-                                    break
+                                            break
                         print USERS_LIST
                     elif decoded[:2] == BROADCAST:
                         msg = decoded[2:]
@@ -286,11 +286,12 @@ def start_listening():
                             if user[1] == str(sock.fileno()):
                                 print 'Removing ' + user[3] + ' on socket ' +\
                                       user[1] + '.'
-                                del USERS_LIST[index]
                                 # Close connection
                                 sock.close()
                                 # Remove socket from SOCKET_LIST
-                                SOCKET_LIST.remove(sockfd)
+                                SOCKET_LIST.remove(sock)
+                                del USERS_LIST[index]
+                                break
                     # Disconnected
                     else:
                         pass

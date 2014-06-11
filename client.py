@@ -75,7 +75,7 @@ def prompt(who='', msg=''):
             sys.stdout.flush()
 
 
-def message(target_socket, message):
+def send_message(target_socket, message):
     """Takes a target socket and a message and sends a message to the specified
     socket. This function is supposed to be only used for server notificatoins
     to specific users. For all users, check broadcast.__doc__"""
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                         public_key = pickle.loads(data)
                         SYMM_KEY_enc = public_key.encrypt(SYMM_KEY, 32)
                         print '--> Sending encrypted Symmetric Key to server...'
-                        message(sock, pickle.dumps(SYMM_KEY_enc))
+                        send_message(sock, pickle.dumps(SYMM_KEY_enc))
                         FIRST_READING = False
                     else:  # Receiving data encrypted with Symmetric Key
                         #print '--> Decrypting incoming data...'
@@ -172,7 +172,7 @@ if __name__ == "__main__":
                             # Request Server Information
                             data_enc = EncodeAES(CIPHER, REQ_SERVER_INFO)
                             # Send REQ_SERVER_INFO to server
-                            message(sock, data_enc)
+                            send_message(sock, data_enc)
                         elif decoded[:2] == SHARE_SERVER_INFO:
                             data = decoded.split(',')
                             print '\nChat server configuration:'
@@ -186,7 +186,7 @@ if __name__ == "__main__":
                                     # Send CHANGE_NICKNAME to server
                                     msg = CHANGE_NICKNAME + nickname
                                     msg_enc = EncodeAES(CIPHER, msg)
-                                    message(sock, msg_enc)
+                                    send_message(sock, msg_enc)
                                 else:
                                     print 'Sorry, your nickname is too long.\n'
                                     sys.exit()
