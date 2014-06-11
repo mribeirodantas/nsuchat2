@@ -65,14 +65,9 @@ def prompt(who='', msg=''):
         sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + '<You> ')
         sys.stdout.flush()
     else:
-        if '[Server]' in who:
-            sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + who
-                         + msg)
-            sys.stdout.flush()
-        else:
-            sys.stdout.write(strftime('\n[%H:%M:%S] ', gmtime()) + who
-                         + msg)
-            sys.stdout.flush()
+        sys.stdout.write(strftime('\n[%H:%M:%S] ', gmtime()) + who
+                                  + msg)
+        sys.stdout.flush()
 
 
 def send_message(target_socket, message):
