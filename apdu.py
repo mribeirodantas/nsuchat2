@@ -62,6 +62,11 @@ WELCOME = '07'
     |________|"""
 
 BROADCAST = '08'
+"""  ------------------
+    | HEADER | MESSAGE |
+    |   08   |         |
+    |________|_________|"""
+
 PRIV_MESSAGE = '09'
 CHANGE_NICK = '10'
 REQ_NICKLIST = '11'

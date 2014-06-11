@@ -278,6 +278,11 @@ def start_listening():
                                     SOCKET_LIST.remove(sockfd)
                                     break
                         print USERS_LIST
+                    elif decoded[:2] == BROADCAST:
+                        msg = decoded[2:]
+                    # Disconnected
+                    else:
+                        pass
 
 if __name__ == "__main__":
     if (len(sys.argv) != 2):

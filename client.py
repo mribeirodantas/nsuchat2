@@ -34,6 +34,8 @@ import base64
 from server import create_socket
 from apdu import *
 
+from time import gmtime, strftime
+
 SOCKET_LIST = []         # List of sockets connected to the server
 VERSION = 0.1            # Client Application Protocol Version
 nickname = ''            # User nickname
@@ -56,6 +58,21 @@ pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING
 # encrypt with AES, encode with base64
 EncodeAES = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
 DecodeAES = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
+
+
+def prompt(who='', msg=''):
+    if len(who) == 0:
+        sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + '<You> ')
+        sys.stdout.flush()
+    else:
+        if '[Server]' in who:
+            sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + who
+                         + msg)
+            sys.stdout.flush()
+        else:
+            sys.stdout.write(strftime('\n[%H:%M:%S] ', gmtime()) + who
+                         + msg)
+            sys.stdout.flush()
 
 
 def message(target_socket, message):
@@ -144,7 +161,7 @@ if __name__ == "__main__":
                         message(sock, pickle.dumps(SYMM_KEY_enc))
                         FIRST_READING = False
                     else:  # Receiving data encrypted with Symmetric Key
-                        print '--> Decrypting incoming data...'
+                        #print '--> Decrypting incoming data...'
                         decoded = DecodeAES(CIPHER, data)
                         if decoded[:2] == SYMM_ACK:
                             print '--> Symmetric key exchange was successful.'
@@ -182,3 +199,25 @@ if __name__ == "__main__":
                             sys.exit()
                         elif decoded[:2] == WELCOME:
                             print 'Welcome to the server ' + nickname + '.'
+                            prompt()
+            # Client user entered text
+            else:
+                try:
+                    msg = sys.stdin.readline()
+                    if '/clear' in msg:
+                        # ANSI Way
+                        # Clear the window: print chr(27) + "[2J"
+                        # Move cursor to top of the window \x1b[H
+                        sys.stderr.write("\x1b[2J\x1b[H")
+                        prompt()
+                    # Broadcast data
+                    else:
+                        # Adding BROADCAST header
+                        h_msg = BROADCAST + msg
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        client_socket.send(msg_enc)
+                        # If a command has just been run, do not show prompt
+                        prompt()
+                except (KeyboardInterrupt, IndexError):
+                    print '\nQuitting...'
+                    sys.exit()
