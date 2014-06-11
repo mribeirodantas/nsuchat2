@@ -207,6 +207,11 @@ if __name__ == "__main__":
                         elif decoded[:2] == WELCOME:
                             print 'Welcome to the server ' + nickname + '.'
                             prompt()
+                        elif decoded[:2] == BROADCAST:
+                            message = decoded[2:]
+                            prompt('[server] ', message)
+                            prompt()
+
             # Buffer from stdin (user entered text)
             else:
                 try:
@@ -226,12 +231,13 @@ if __name__ == "__main__":
                             msg = CHANGE_NICKNAME + nickname
                             msg_enc = EncodeAES(CIPHER, msg)
                             send_message(client_socket, msg_enc)
+                        prompt()
                     # Broadcast data
                     else:
                         # Adding BROADCAST header
-                        h_msg = BROADCAST + msg
-                        msg_enc = EncodeAES(CIPHER, h_msg)
-                        client_socket.send(msg_enc)
+                        #h_msg = BROADCAST + msg
+                        #msg_enc = EncodeAES(CIPHER, h_msg)
+                        #client_socket.send(msg_enc)
                         # If a command has just been run, do not show prompt
                         prompt()
                 except (KeyboardInterrupt, IndexError):

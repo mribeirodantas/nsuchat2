@@ -115,6 +115,29 @@ def create_socket(SERVER_PORT, host='0.0.0.0', server=False):
     return s
 
 
+def broadcast(source_socket, message, server_socket):
+    """Function to broadcast chat messages to all connected clients"""
+    # Do not send the message to server socket and the client who has
+    # sent the message
+    for socket in SOCKET_LIST:
+        if socket != server_socket and socket != source_socket:
+            try:
+                for user in USERS_LIST:
+                    # The user for each specific socket
+                    if user[1] == str(socket.fileno()):
+                        SYMM_KEY = user[2]
+                        CIPHER = AES.new(SYMM_KEY)
+                        h_msg = BROADCAST + message
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        socket.send(msg_enc)
+            except:
+                # broken socket connection may be, chat client pressed ctrl+c
+                # for example
+                socket.close()
+                CONNECTION_LIST.remove(socket)
+                remove_user(str(socket.fileno()))
+
+
 def message(target_socket, message):
     """Takes a target socket and a message and sends a message to the specified
     socket. This function is supposed to be only used for server notificatoins
@@ -257,6 +280,8 @@ def start_listening():
                                     msg = WELCOME
                                     msg_enc = EncodeAES(CIPHER, msg)
                                     message(sock, msg_enc)
+                                    broadcast(sock, nickname + ' entered ' +
+                                              'room.\n', server_socket)
                                     break
                                 # Nickname in use
                                 else:
@@ -296,6 +321,9 @@ def start_listening():
                                     print 'Socket ' + str(sock.fileno()) +\
                                           ' switched successfully to ' +\
                                           nickname
+                                    broadcast(sock, user[3] + ' is now ' +
+                                              'known as ' + nickname + '.\n',
+                                              server_socket)
                                     for index, user in enumerate(
                                                         USERS_LIST):
                                         if user[1] == str(sock.fileno()) \
@@ -329,13 +357,16 @@ def start_listening():
                         # Remove user from USERS_LIST
                         for index, user in enumerate(USERS_LIST):
                             if user[1] == str(sock.fileno()):
-                                print 'Removing ' + user[3] + ' on socket ' +\
+                                nickname = user[3]
+                                print 'Removing ' + nickname + ' on socket ' +\
                                       user[1] + '.'
                                 # Close connection
                                 sock.close()
                                 # Remove socket from SOCKET_LIST
                                 SOCKET_LIST.remove(sock)
                                 del USERS_LIST[index]
+                                broadcast(sock, nickname + ' left ' +
+                                              'room.\n', server_socket)
                                 break
                     # Disconnected
                     else:
