@@ -26,6 +26,7 @@
 # from apdu import *
 
 SYMM_ACK = '02'
+# First message encrypted with Symmetric Key (AES)
 """  --------
     | HEADER |
     |   02   |
@@ -44,29 +45,43 @@ SHARE_SERVER_INFO = '04'
     |________|______________|______________|_____________|_______________|"""
 
 CHANGE_NICKNAME = '05'
+# Switch to a nickname
 """  -------------------
     | HEADER | NICKNAME |
     |   03   |          |
     |________|__________|"""
 
 ALREADY_USED = '06'
+# Chosen nick already used by someone else.
 """  --------
     | HEADER |
     |   06   |
     |________|"""
 
 WELCOME = '07'
+# All steps in order to join room were satisfied.
 """  --------
     | HEADER |
     |   07   |
     |________|"""
 
 BROADCAST = '08'
+# Message that is supposed to be sent to every connected user.
 """  ------------------
     | HEADER | MESSAGE |
     |   08   |         |
     |________|_________|"""
 
 PRIV_MESSAGE = '09'
-CHANGE_NICK = '10'
-REQ_NICKLIST = '11'
+# DESTINATION length is calculated by MAX_NICK_LEN
+"""  --------------------------------
+    | HEADER | DESTINATION | MESSAGE |
+    |   09   |             |         |
+    |________|_____________|_________|"""
+
+REQ_NICKLIST = '10'
+# Request list of online users.
+"""  --------
+    | HEADER |
+    |   10   |
+    |________|"""
