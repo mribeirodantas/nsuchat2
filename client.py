@@ -163,8 +163,10 @@ if __name__ == "__main__":
                             print 'Protocol version: ' + data[4] + '\n'
                             if data[4] == str(VERSION):
                                 if len(nickname) <= int(data[2]):
-                                    pass
-                                    # Send nickname
+                                    # Send CHANGE_NICKNAME to server
+                                    msg = CHANGE_NICKNAME + nickname
+                                    msg_enc = EncodeAES(CIPHER, msg)
+                                    message(sock, msg_enc)
                                 else:
                                     print 'Sorry, your nickname is too long.\n'
                                     sys.exit()
@@ -174,3 +176,9 @@ if __name__ == "__main__":
                                  data[4] + '\nClient Application Protocol' +\
                                  ' Version: ' + str(VERSION)
                                 sys.exit()
+                        elif decoded[:2] == ALREADY_USED:
+                            print 'Nickname already in use.'
+                            print 'Exitting...'
+                            sys.exit()
+                        elif decoded[:2] == WELCOME:
+                            print 'Welcome to the server ' + nickname + '.'

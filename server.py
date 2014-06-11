@@ -139,7 +139,7 @@ def register(ipaddr, socket_id, symmetric_key, nickname):
     symmetric key for future encryption/decryption."""
     already_registered = False
     for user in USERS_LIST:
-        if user[1] == socket_id:
+        if user[1] == socket_id and user[3] == nickname or user[3] == nickname:
             already_registered = True
     if not already_registered:
         USERS_LIST.append((ipaddr, socket_id, symmetric_key, nickname))
@@ -197,7 +197,8 @@ def start_listening():
                         break
                 if IS_SYMM_SYN:  # Encrypted with Public Key
                     #print 'Encrypted data: ' + data
-                    print '--> Receiving encrypted Symmetric Key from client...'
+                    print '--> Receiving encrypted Symmetric Key from ' +\
+                          'client...'
                     symm_key_enc = pickle.loads(data)
                     SYMM_KEY = RSAPrivKey.decrypt(symm_key_enc)
                     print '--> Decrypting Symmetric Key with Private Key..'
@@ -218,7 +219,7 @@ def start_listening():
                         if str(sock.fileno()) == user[1]:
                             CIPHER = AES.new(user[2])
                     decoded = DecodeAES(CIPHER, data)
-                    # Server info requested
+                    # Decoding header
                     if decoded[:2] == REQ_SERVER_INFO:
                         print 'Server Info requested by socket id ' +\
                               str(sock.fileno()) + ' from ' + addr[0] + '.'
@@ -229,6 +230,54 @@ def start_listening():
                         msg_enc = EncodeAES(CIPHER, msg)
                         # Sharing server info
                         message(sock, msg_enc)
+                    # Decoding header
+                    elif decoded[:2] == CHANGE_NICKNAME:
+                        nickname = decoded[2:]
+                        print 'Socket ' + str(sock.fileno()) + ' from ' +\
+                              addr[0] + ' requested to switch nickname ' +\
+                              'to ' + nickname + '.'
+                        for user in USERS_LIST:
+                            # Looking for the register in USERS_LIST
+                            if user[1] == str(sock.fileno()):
+                                # USERS_LIST is an immutable data strcuture
+                                # (tuple), therefore it is needed to add a
+                                # new register and then remove the old one.
+                                print 'Looking for user in USERS_LIST...'
+                                # Registering available nickname
+                                if register(user[0], user[1], user[2],
+                                   nickname):
+                                    print 'Socket ' + str(sock.fileno()) +\
+                                          ' switched successfully to ' +\
+                                          nickname
+                                    for index, user in enumerate(
+                                                        USERS_LIST):
+                                        if user[1] == str(sock.fileno()) \
+                                        and user[3] == '':
+                                            del USERS_LIST[index]
+                                    msg = WELCOME
+                                    msg_enc = EncodeAES(CIPHER, msg)
+                                    message(sock, msg_enc)
+                                    break
+                                # Nickname in use
+                                else:
+                                    print 'Socket ' + str(sock.fileno()) +\
+                                          ' attempted to switch to nick' +\
+                                          ' that is in use now.'
+                                    msg = ALREADY_USED
+                                    msg_enc = EncodeAES(CIPHER, msg)
+                                    message(sock, msg_enc)
+
+                                    # Remove user from USERS_LIST
+                                    for index, user in enumerate(USERS_LIST):
+                                        if user[1] == str(sock.fileno()) and \
+                                        user[3] == '':
+                                            del USERS_LIST[index]
+                                    # Close connection
+                                    sock.close()
+                                    # Remove socket from SOCKET_LIST
+                                    SOCKET_LIST.remove(sockfd)
+                                    break
+                        print USERS_LIST
 
 if __name__ == "__main__":
     if (len(sys.argv) != 2):

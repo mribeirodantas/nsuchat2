@@ -43,9 +43,24 @@ SHARE_SERVER_INFO = '04'
     |   04   |              |              |             |               |
     |________|______________|______________|_____________|_______________|"""
 
-REGISTER_NICKNAME = '05'
+CHANGE_NICKNAME = '05'
+"""  -------------------
+    | HEADER | NICKNAME |
+    |   03   |          |
+    |________|__________|"""
+
 ALREADY_USED = '06'
+"""  --------
+    | HEADER |
+    |   06   |
+    |________|"""
+
 WELCOME = '07'
+"""  --------
+    | HEADER |
+    |   07   |
+    |________|"""
+
 BROADCAST = '08'
 PRIV_MESSAGE = '09'
 CHANGE_NICK = '10'
