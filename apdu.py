@@ -44,11 +44,11 @@ SHARE_SERVER_INFO = '04'
     |   04   |              |              |             |               |
     |________|______________|______________|_____________|_______________|"""
 
-CHANGE_NICKNAME = '05'
-# Switch to a nickname
+SET_NICKNAME = '05'
+# Set the entering nickname
 """  -------------------
     | HEADER | NICKNAME |
-    |   03   |          |
+    |   05   |          |
     |________|__________|"""
 
 ALREADY_USED = '06'
@@ -92,3 +92,10 @@ DISCONNECT = '11'
     | HEADER |
     |   11   |
     |________|"""
+
+CHANGE_NICKNAME = '12'
+# Switch to a nickname
+"""  -------------------
+    | HEADER | NICKNAME |
+    |   12   |          |
+    |________|__________|"""

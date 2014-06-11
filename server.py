@@ -231,7 +231,7 @@ def start_listening():
                         # Sharing server info
                         message(sock, msg_enc)
                     # Decoding header
-                    elif decoded[:2] == CHANGE_NICKNAME:
+                    elif decoded[:2] == SET_NICKNAME:
                         nickname = decoded[2:]
                         print 'Socket ' + str(sock.fileno()) + ' from ' +\
                               addr[0] + ' requested to switch nickname ' +\
@@ -271,6 +271,51 @@ def start_listening():
                                     for index, user in enumerate(USERS_LIST):
                                         if user[1] == str(sock.fileno()) and \
                                         user[3] == '':
+                                            # Close connection
+                                            sock.close()
+                                            # Remove socket from SOCKET_LIST
+                                            SOCKET_LIST.remove(sock)
+                                            del USERS_LIST[index]
+                                            break
+                        print USERS_LIST
+                    elif decoded[:2] == CHANGE_NICKNAME:
+                        nickname = decoded[2:]
+                        print 'Socket ' + str(sock.fileno()) + ' from ' +\
+                              addr[0] + ' requested to switch nickname ' +\
+                              'to ' + nickname
+                        for user in USERS_LIST:
+                            # Looking for the register in USERS_LIST
+                            if user[1] == str(sock.fileno()):
+                                # USERS_LIST is an immutable data strcuture
+                                # (tuple), therefore it is needed to add a
+                                # new register and then remove the old one.
+                                print 'Looking for user in USERS_LIST...'
+                                # Registering available nickname
+                                if register(user[0], user[1], user[2],
+                                   nickname):
+                                    print 'Socket ' + str(sock.fileno()) +\
+                                          ' switched successfully to ' +\
+                                          nickname
+                                    for index, user in enumerate(
+                                                        USERS_LIST):
+                                        if user[1] == str(sock.fileno()) \
+                                        and user[3] != nickname:
+                                            del USERS_LIST[index]
+                                    # Broadcast nickname changing
+                                    break
+                                # Nickname in use
+                                else:
+                                    print 'Socket ' + str(sock.fileno()) +\
+                                          ' attempted to switch to nick' +\
+                                          ' that is in use now.'
+                                    msg = ALREADY_USED
+                                    msg_enc = EncodeAES(CIPHER, msg)
+                                    message(sock, msg_enc)
+
+                                    # Remove user from USERS_LIST
+                                    for index, user in enumerate(USERS_LIST):
+                                        if user[1] == str(sock.fileno()) and \
+                                        user[3] == nickname:
                                             # Close connection
                                             sock.close()
                                             # Remove socket from SOCKET_LIST

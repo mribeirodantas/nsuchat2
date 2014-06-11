@@ -175,16 +175,20 @@ if __name__ == "__main__":
                             send_message(sock, data_enc)
                         elif decoded[:2] == SHARE_SERVER_INFO:
                             data = decoded.split(',')
+                            MAX_CONN_REQ = data[1]
+                            MAX_NICK_LEN = data[2]
+                            MAX_MSG_LEN = data[3]
+                            APP_PROTO_VER = data[4]
                             print '\nChat server configuration:'
                             print 'Maximum number of connected users: ' +\
-                                   data[1]
-                            print 'Maximum nickname length: ' + data[2]
-                            print 'Maximum message length: ' + data[3]
-                            print 'Protocol version: ' + data[4] + '\n'
+                                   MAX_CONN_REQ
+                            print 'Maximum nickname length: ' + MAX_NICK_LEN
+                            print 'Maximum message length: ' + MAX_MSG_LEN
+                            print 'Protocol version: ' + APP_PROTO_VER + '\n'
                             if data[4] == str(VERSION):
-                                if len(nickname) <= int(data[2]):
-                                    # Send CHANGE_NICKNAME to server
-                                    msg = CHANGE_NICKNAME + nickname
+                                if len(nickname) <= int(MAX_NICK_LEN):
+                                    # Send SET_NICKNAME to server
+                                    msg = SET_NICKNAME + nickname
                                     msg_enc = EncodeAES(CIPHER, msg)
                                     send_message(sock, msg_enc)
                                 else:
@@ -203,7 +207,7 @@ if __name__ == "__main__":
                         elif decoded[:2] == WELCOME:
                             print 'Welcome to the server ' + nickname + '.'
                             prompt()
-            # Client user entered text
+            # Buffer from stdin (user entered text)
             else:
                 try:
                     msg = sys.stdin.readline()
@@ -213,6 +217,15 @@ if __name__ == "__main__":
                         # Move cursor to top of the window \x1b[H
                         sys.stderr.write("\x1b[2J\x1b[H")
                         prompt()
+                    elif msg[:5] == '/nick' and len(msg) >= 7:
+                        msg = msg.split(' ')
+                        nickname = msg[1][:-1]  # [:-1] removes '\n' at the end
+                        if len(nickname) <= MAX_NICK_LEN and \
+                        not ' ' in nickname:
+                            # Send CHANGE_NICKNAME to server
+                            msg = CHANGE_NICKNAME + nickname
+                            msg_enc = EncodeAES(CIPHER, msg)
+                            send_message(client_socket, msg_enc)
                     # Broadcast data
                     else:
                         # Adding BROADCAST header
