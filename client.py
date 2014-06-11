@@ -141,6 +141,9 @@ if __name__ == "__main__":
                                                         SOCKET_LIST, [], [])
         except KeyboardInterrupt:
             print "\nQuitting..."
+            h_msg = DISCONNECT
+            msg_enc = EncodeAES(CIPHER, h_msg)
+            client_socket.send(msg_enc)
             sys.exit()
         for sock in read_sockets:
             #incoming message from remote server
@@ -220,4 +223,7 @@ if __name__ == "__main__":
                         prompt()
                 except (KeyboardInterrupt, IndexError):
                     print '\nQuitting...'
+                    h_msg = DISCONNECT
+                    msg_enc = EncodeAES(CIPHER, h_msg)
+                    client_socket.send(msg_enc)
                     sys.exit()

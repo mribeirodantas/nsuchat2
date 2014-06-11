@@ -85,3 +85,10 @@ REQ_NICKLIST = '10'
     | HEADER |
     |   10   |
     |________|"""
+
+DISCONNECT = '11'
+# Request disconnection from server
+"""  --------
+    | HEADER |
+    |   11   |
+    |________|"""

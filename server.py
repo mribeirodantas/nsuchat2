@@ -280,6 +280,17 @@ def start_listening():
                         print USERS_LIST
                     elif decoded[:2] == BROADCAST:
                         msg = decoded[2:]
+                    elif decoded[:2] == DISCONNECT:
+                        # Remove user from USERS_LIST
+                        for index, user in enumerate(USERS_LIST):
+                            if user[1] == str(sock.fileno()):
+                                print 'Removing ' + user[3] + ' on socket ' +\
+                                      user[1] + '.'
+                                del USERS_LIST[index]
+                                # Close connection
+                                sock.close()
+                                # Remove socket from SOCKET_LIST
+                                SOCKET_LIST.remove(sockfd)
                     # Disconnected
                     else:
                         pass
