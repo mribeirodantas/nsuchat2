@@ -207,7 +207,7 @@ if __name__ == "__main__":
             else:
                 try:
                     msg = sys.stdin.readline()
-                    if '/clear' in msg:
+                    if msg[:6] == '/clear':
                         # ANSI Way
                         # Clear the window: print chr(27) + "[2J"
                         # Move cursor to top of the window \x1b[H
