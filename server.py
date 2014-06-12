@@ -400,6 +400,14 @@ def start_listening():
                     elif decoded[:3] == PRIV_MESSAGE:
                         msg = decoded[2:].split(',')
                         priv_message(sock, msg[0], msg[1])
+                    elif decoded[:2] == REQ_NICKLIST:
+                        nicklist = []
+                        for user in USERS_LIST:
+                            nicklist.append(user[3])
+                        nicklist = " ".join(nicklist)
+                        h_msg = SHARE_NICKLIST + nicklist
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        message(sock, msg_enc)
                     elif decoded[:2] == DISCONNECT:
                         # Remove user from USERS_LIST
                         for index, user in enumerate(USERS_LIST):

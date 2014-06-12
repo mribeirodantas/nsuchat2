@@ -106,3 +106,10 @@ PUB_MESSAGE = '13'
     | HEADER | MESSAGE |    | HEADER | NICKNAME | MESSAGE |
     |   13   |         |    |        |          |         |
     |________|_________|    |________|__________|_________|"""
+
+SHARE_NICKLIST = '14'
+# Request list of online users.
+"""  --------
+    | HEADER |
+    |   14   |
+    |________|"""

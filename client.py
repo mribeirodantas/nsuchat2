@@ -61,8 +61,12 @@ DecodeAES = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
 
 
 def prompt(who='', msg=''):
-    if len(who) == 0:
+    if who == '':
         sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + '<You> ')
+        sys.stdout.flush()
+    elif who == 'Usuários conectados: ':
+        sys.stdout.write(strftime('[%H:%M:%S] ', gmtime()) + who
+                                  + msg)
         sys.stdout.flush()
     else:
         sys.stdout.write(strftime('\n[%H:%M:%S] ', gmtime()) + who
@@ -210,6 +214,11 @@ if __name__ == "__main__":
                             msg = decoded[3:].split(',')
                             prompt('<' + msg[0] + '> ', msg[1])
                             prompt()
+                        elif decoded[:2] == SHARE_NICKLIST:
+                            nicklist = decoded[2:].split(',')
+                            prompt('Usuários conectados: ', ' '.join(nicklist) +
+                            '\n')
+                            prompt()
                         else:
                             print decoded
 
@@ -223,16 +232,20 @@ if __name__ == "__main__":
                         # Move cursor to top of the window \x1b[H
                         sys.stderr.write("\x1b[2J\x1b[H")
                         prompt()
-                    elif msg[:5] == '/nick' and len(msg) >= 7:
+                    elif msg[:6] == '/nick ' and len(msg) >= 7:
                         msg = msg.split(' ')
                         nickname = msg[1][:-1]  # [:-1] removes '\n' at the end
                         if len(nickname) <= MAX_NICK_LEN and \
                         not ' ' in nickname:
                             # Send CHANGE_NICKNAME to server
-                            msg = CHANGE_NICKNAME + nickname
-                            msg_enc = EncodeAES(CIPHER, msg)
+                            h_msg = CHANGE_NICKNAME + nickname
+                            msg_enc = EncodeAES(CIPHER, h_msg)
                             send_message(client_socket, msg_enc)
                         prompt()
+                    elif msg[:9] == '/nicklist':
+                        h_msg = REQ_NICKLIST
+                        msg_enc = EncodeAES(CIPHER, h_msg)
+                        send_message(client_socket, msg_enc)
                     # Broadcast PUB_MESSAGE
                     else:
                         # Adding PUB_MESSAGE header
