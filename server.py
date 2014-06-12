@@ -24,12 +24,12 @@
 import socket
 import select
 import sys
+import base64
+import pickle
 
 from Crypto.PublicKey import RSA
 from Crypto.Util import randpool
 from Crypto.Cipher import AES
-import base64
-import pickle
 
 from apdu import *
 

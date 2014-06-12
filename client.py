@@ -24,17 +24,15 @@
 import socket
 import select
 import sys
-
-import pickle
-from Crypto.Cipher import AES
-
 from os import urandom
 import base64
+import pickle
+from time import gmtime, strftime
+
+from Crypto.Cipher import AES
 
 from server import create_socket
 from apdu import *
-
-from time import gmtime, strftime
 
 SOCKET_LIST = []         # List of sockets connected to the server
 VERSION = 0.1            # Client Application Protocol Version
