@@ -1,6 +1,6 @@
 # NSUChat2 (Not So Unsafe Chat, 2nd attempt)
 
-#### Important Note: NSUChat should NOT be used in a real scenario. I developed it in order to perfect my skills in network programming and Python but it lacks several features that make a network application really safe. That's why I named it Not So Unsafe Chat, though it is is still somehwat unsafe.
+#### Important Note: NSUChat should NOT be used in a real scenario. I developed it in order to perfect my skills in network programming, cryptography and Python but it lacks several features that make a network application really safe. That's why I named it Not So Unsafe Chat, though it is is still somewhat unsafe.
 
 ## What is it?
 
